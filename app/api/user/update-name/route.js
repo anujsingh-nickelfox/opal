@@ -35,10 +35,30 @@ export async function PATCH(request) {
     }
 
     // Step 3: Extract user ID from the decoded token
-    const userId = decoded?.id || decoded?.sub;
+    let userId = decoded?.id || decoded?.sub;
+
+    // Fallback: try headers if cookie didn't work
+    if (!userId) {
+      const headerUserId = request.headers.get('x-user-id');
+      const headerUserEmail = request.headers.get('x-user-email');
+
+      if (headerUserEmail) {
+        await connectDB();
+        const userByEmail = await User.findOne({ email: headerUserEmail });
+        if (!userByEmail) {
+          return NextResponse.json(
+            { success: false, message: 'User not found.' },
+            { status: 404 }
+          );
+        }
+        userId = userByEmail._id.toString();
+      } else if (headerUserId) {
+        userId = headerUserId;
+      }
+    }
 
     if (!userId) {
-      console.error('No user ID in token:', JSON.stringify(decoded));
+      console.error('No user ID in token or headers');
       return NextResponse.json(
         { success: false, message: 'Invalid session token.' },
         { status: 401 }

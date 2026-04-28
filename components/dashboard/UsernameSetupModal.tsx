@@ -1,6 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { getSession } from 'next-auth/react';
+
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+    };
+  }
+}
 
 function getInitials(name: string) {
   if (!name || !name.trim()) return '?';
@@ -39,9 +50,14 @@ export function UsernameSetupModal({ isOpen, onSuccess, onSkip }: UsernameSetupM
     setError('');
 
     try {
+      const session = await getSession();
       const res = await fetch('/api/user/update-name', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': session?.user?.id || '',
+          'x-user-email': session?.user?.email || '',
+        },
         body: JSON.stringify({ displayName: trimmed }),
       });
       const data = await res.json();
