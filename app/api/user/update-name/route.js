@@ -1,20 +1,26 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
 export async function PATCH(request) {
   try {
-    // Step 1: Read the NextAuth JWT cookie directly
-    const cookieStore = cookies();
+    // Step 1: Read the NextAuth JWT cookie directly from request
+    const cookieHeader = request.headers.get('cookie') || '';
+    
+    // Parse cookies from header
+    const cookies = {};
+    cookieHeader.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name && value) {
+        cookies[name] = value;
+      }
+    });
 
     // NextAuth stores JWT in this cookie name
-    const tokenCookie =
-      cookieStore.get('__Secure-next-auth.session-token') ||
-      cookieStore.get('next-auth.session-token');
+    const tokenValue = cookies['__Secure-next-auth.session-token'] || cookies['next-auth.session-token'];
 
-    if (!tokenCookie?.value) {
+    if (!tokenValue) {
       console.error('No session cookie found');
       return NextResponse.json(
         { success: false, message: 'No session found. Please log in again.' },
@@ -25,7 +31,7 @@ export async function PATCH(request) {
     // Step 2: Verify and decode the JWT using the shared secret
     let decoded;
     try {
-      decoded = jwt.verify(tokenCookie.value, process.env.NEXTAUTH_SECRET);
+      decoded = jwt.verify(tokenValue, process.env.NEXTAUTH_SECRET);
     } catch (jwtErr) {
       console.error('JWT verify failed:', jwtErr.message);
       return NextResponse.json(
