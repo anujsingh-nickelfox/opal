@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
 export async function PATCH(request) {
   try {
-    // Step 1: Verify session
+    // Verify NEXTAUTH_SECRET exists before calling getServerSession
+    if (!process.env.NEXTAUTH_SECRET) {
+      console.error('❌ NEXTAUTH_SECRET is not set in environment variables');
+      return NextResponse.json(
+        { success: false, message: 'Server configuration error: missing auth secret.' },
+        { status: 500 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    console.log('update-name: session =', JSON.stringify(session));  // debug — remove after fix confirmed
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized. Please log in again.' },
+        { success: false, message: 'Not authenticated. Please log in again.' },
         { status: 401 }
       );
     }
@@ -55,18 +62,15 @@ export async function PATCH(request) {
 
     if (!updated) {
       return NextResponse.json(
-        { success: false, message: 'User not found.' },
+        { success: false, message: 'User not found in database.' },
         { status: 404 }
       );
     }
-
-    console.log('update-name: success, new name =', updated.name);  // debug
 
     return NextResponse.json({ success: true, name: updated.name });
 
   } catch (err) {
     console.error('❌ update-name error:', err.message);
-    console.error(err.stack);
     return NextResponse.json(
       { success: false, message: err.message || 'Internal server error.' },
       { status: 500 }
