@@ -364,11 +364,11 @@ export function HomeDashboardContent() {
 
   // Server renders nothing — Dark Reader can't mutate what doesn't exist
   if (!mounted) {
-    return <div style={{ background: '#000000', minHeight: '100vh', width: '100%' }} />;
+    return <div suppressHydrationWarning style={{ background: '#000000', minHeight: '100vh', width: '100%' }} />;
   }
 
   return (
-    <div style={{ fontFamily: `${fontPrimary}, ${fontSecondary}, system-ui, sans-serif`, background: "#000000", height: "100vh", width: "100vw", display: "flex", flexDirection: "column", overflow: "hidden", color: "#ffffff" }}>
+    <div suppressHydrationWarning style={{ fontFamily: `${fontPrimary}, ${fontSecondary}, system-ui, sans-serif`, background: "#000000", height: "100vh", width: "100vw", display: "flex", flexDirection: "column", overflow: "hidden", color: "#ffffff" }}>
       <div style={{ width: "100%", flex: 1, overflow: "auto" }}>
         {/* ── BODY ── */}
         <div style={{ padding: "40px 48px", width: "100%", boxSizing: "border-box" }}>
